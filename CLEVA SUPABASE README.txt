@@ -1,0 +1,1 @@
+PASS WORD: CLEVA SUPABASE ACC: titusjude.20A
