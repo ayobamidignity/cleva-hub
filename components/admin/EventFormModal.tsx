@@ -100,7 +100,6 @@ export default function EventFormModal({ isOpen, onClose, onSuccess, initialData
               >
                 <option value="IN_PERSON">In-Person</option>
                 <option value="VIRTUAL">Virtual</option>
-                <option value="HYBRID">Hybrid</option>
               </select>
             </div>
           </div>
