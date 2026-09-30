@@ -16,43 +16,109 @@ enum Role {
 enum EventFormat {
   IN_PERSON
   VIRTUAL
+  HYBRID
+}
+
+enum TaskStatus {
+  PENDING
+  APPROVED
+  REJECTED
 }
 
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String?
-  role      Role      @default(AMBASSADOR)
-  points    Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String            @id @default(cuid())
+  email         String            @unique
+  fullName      String?
+  name          String?
+  campus        String?
+  role          Role              @default(AMBASSADOR)
+  points        Int               @default(0)
+  pointsBalance Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
-  checkIns  CheckIn[]
+  registrations EventRegistration[]
+  submissions   TaskSubmission[]
+  redemptions   Redemption[]
 }
 
 model Event {
-  id             String       @id @default(cuid())
+  id             String              @id @default(cuid())
   title          String
   description    String
   eventDate      DateTime
-  format         EventFormat  @default(IN_PERSON)
+  format         EventFormat         @default(IN_PERSON)
   locationOrLink String
-  pointValue     Int          @default(0)
+  pointValue     Int                 @default(0)
+  capacity       Int?
   checkInOtp     String?
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
 
-  checkIns       CheckIn[]
+  registrations  EventRegistration[]
 }
 
-model CheckIn {
-  id         String   @id @default(cuid())
+model EventRegistration {
+  id         String    @id @default(cuid())
   userId     String
   eventId    String
-  verifiedAt DateTime @default(now())
+  attended   Boolean   @default(false)
+  attendedAt DateTime?
+  createdAt  DateTime  @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event      Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
   @@unique([userId, eventId])
+}
+
+model Task {
+  id          String           @id @default(cuid())
+  title       String
+  description String
+  pointValue  Int              @default(0)
+  deadline    DateTime?
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+
+  submissions TaskSubmission[]
+}
+
+model TaskSubmission {
+  id          String     @id @default(cuid())
+  taskId      String
+  userId      String
+  proof       String
+  notes       String?
+  status      TaskStatus @default(PENDING)
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  task        Task       @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Reward {
+  id          String       @id @default(cuid())
+  title       String
+  description String
+  cost        Int
+  stock       Int          @default(0)
+  imageUrl    String?
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  redemptions Redemption[]
+}
+
+model Redemption {
+  id          String   @id @default(cuid())
+  userId      String
+  rewardId    String
+  redeemedAt  DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reward      Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
 }
