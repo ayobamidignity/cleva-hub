@@ -28,7 +28,7 @@ export default function EventFormModal({ isOpen, onClose, onSuccess, initialData
     e.preventDefault();
     setSubmitting(true);
 
-    const url = initialData ? `/api/admin/events/${initialData.id}` : "/api/events";
+    const url = initialData ? `/api/admin/events/${initialData.id}` : "/api/admin/events";
     const method = initialData ? "PATCH" : "POST";
 
     const res = await fetch(url, {
