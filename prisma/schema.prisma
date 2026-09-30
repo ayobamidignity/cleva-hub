@@ -4,13 +4,13 @@ generator client {
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  url       = process.env.DATABASE_URL
+  directUrl = process.env.DIRECT_URL
 }
 
 enum Role {
-  ADMIN
   AMBASSADOR
+  ADMIN
 }
 
 enum EventFormat {
@@ -18,138 +18,41 @@ enum EventFormat {
   VIRTUAL
 }
 
-enum TaskStatus {
-  DRAFT
-  ACTIVE
-  PAUSED
-  COMPLETED
-}
-
-enum SubmissionStatus {
-  PENDING
-  APPROVED
-  REJECTED
-}
-
-enum RedemptionStatus {
-  PROCESSING
-  FULFILLED
-  CANCELLED
-}
-
 model User {
-  id            String              @id @default(cuid())
-  email         String              @unique
-  fullName      String
-  campus        String?
-  role          Role                @default(AMBASSADOR)
-  pointsBalance Int                 @default(0)
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  registrations EventRegistration[]
-  submissions   TaskSubmission[]
-  redemptions   Redemption[]
+  id        String    @id @default(cuid())
+  email     String    @unique
+  name      String?
+  role      Role      @default(AMBASSADOR)
+  points    Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-  @@map("users")
+  checkIns  CheckIn[]
 }
 
 model Event {
-  id             String              @id @default(cuid())
+  id             String       @id @default(cuid())
   title          String
-  description    String              @db.Text
+  description    String
   eventDate      DateTime
-  format         EventFormat         @default(IN_PERSON)
+  format         EventFormat  @default(IN_PERSON)
   locationOrLink String
-  pointValue     Int                 @default(50)
+  pointValue     Int          @default(0)
   checkInOtp     String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  registrations  EventRegistration[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
 
-  @@map("events")
+  checkIns       CheckIn[]
 }
 
-model EventRegistration {
-  id          String    @id @default(cuid())
-  eventId     String
-  userId      String
-  qrCodeToken String    @unique @default(uuid())
-  attended    Boolean   @default(false)
-  checkedInAt DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  event Event @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([eventId, userId])
-  @@map("event_registrations")
-}
-
-model Task {
-  id          String           @id @default(cuid())
-  title       String
-  description String           @db.Text
-  pointValue  Int              @default(100)
-  deadline    DateTime?
-  category    String           @default("Content Creation")
-  status      TaskStatus       @default(ACTIVE)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-  submissions TaskSubmission[]
-
-  @@map("tasks")
-}
-
-model TaskSubmission {
-  id          String           @id @default(cuid())
-  taskId      String
-  userId      String
-  proofLink   String?
-  notes       String?          @db.Text
-  status      SubmissionStatus @default(PENDING)
-  reviewNotes String?
-  reviewedAt  DateTime?
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
-
-  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([taskId])
-  @@index([userId])
-  @@map("task_submissions")
-}
-
-model Reward {
-  id          String       @id @default(cuid())
-  title       String
-  description String       @db.Text
-  pointCost   Int
-  category    String       @default("Merch")
-  imageUrl    String?
-  inStock     Boolean      @default(true)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-  redemptions Redemption[]
-
-  @@map("rewards")
-}
-
-model Redemption {
-  id         String           @id @default(cuid())
-  rewardId   String
+model CheckIn {
+  id         String   @id @default(cuid())
   userId     String
-  pointsPaid Int
-  status     RedemptionStatus @default(PROCESSING)
-  notes      String?
-  createdAt  DateTime         @default(now())
-  updatedAt  DateTime         @updatedAt
+  eventId    String
+  verifiedAt DateTime @default(now())
 
-  reward Reward @relation(fields: [rewardId], references: [id], onDelete: Cascade)
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  event      Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
 
-  @@index([rewardId])
-  @@index([userId])
-  @@map("redemptions")
+  @@unique([userId, eventId])
 }
